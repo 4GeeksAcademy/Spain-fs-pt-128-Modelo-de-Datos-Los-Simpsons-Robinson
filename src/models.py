@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
+# Tablas intermedias corregidas
 favorite_character = Table(
     "favorite_character",
     db.metadata,
@@ -12,6 +13,7 @@ favorite_character = Table(
     Column("user_id", ForeignKey("user.id"), nullable=False),
     Column("character_id", ForeignKey("character.id"), nullable=True)
 )
+
 favorite_location = Table(
     "favorite_location",
     db.metadata,
@@ -28,17 +30,19 @@ class User(db.Model):
     lastname: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(120), nullable=False)
-    characters_like: Mapped[List["Character"]] = relationship(
+    
+    # Nombres actualizados a favorites_characters
+    favorites_characters: Mapped[List["Character"]] = relationship(
         "Character",
         secondary=favorite_character,
-        back_populates="users_characters_like",
-
+        back_populates="users_who_favorited",
     )
 
-    locations_like: Mapped[List["Location"]] = relationship(
+    # Nombres actualizados a favorites_locations
+    favorites_locations: Mapped[List["Location"]] = relationship(
         "Location",
         secondary=favorite_location,
-        back_populates="users_locations_like"
+        back_populates="users_who_favorited"
     )
 
     def serialize(self):
@@ -58,8 +62,8 @@ class User(db.Model):
             "lastname": self.lastname,
             "email": self.email,
             "favorites": {                
-                "characters": [dict(character.serialize(), type="personaje") for character in self.characters_like],
-                "locations": [dict(location.serialize(), type="ubicacion") for location in self.locations_like]
+                "characters": [dict(character.serialize(), type="personaje") for character in self.favorites_characters],
+                "locations": [dict(location.serialize(), type="ubicacion") for location in self.favorites_locations]
             }
         }
 
@@ -72,9 +76,10 @@ class Character(db.Model):
     gender: Mapped[str] = mapped_column(String(60))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     occupation: Mapped[str] = mapped_column(String(255))
-    users_characters_like: Mapped[List["User"]] = relationship(
+    
+    users_who_favorited: Mapped[List["User"]] = relationship(
         secondary=favorite_character,
-        back_populates="characters_like",
+        back_populates="favorites_characters",
     )
 
     phrases: Mapped[List["Phrase"]] = relationship(
@@ -90,19 +95,6 @@ class Character(db.Model):
             "id": self.id,
             "age": self.age,
             "birthdate": self.birthdate,
-            "gender": self.gender,
-            "name": self.name,
-            "occupation": self.occupation,            
-            "phrases": ", ".join([phrase.text for phrase in self.phrases]) if self.phrases else "Unknown",
-            "status": self.status
-        }
-
-    def serialize_complete(self):
-        return {
-            "id": self.id,
-            "age": self.age,
-            "birthdate": self.birthdate,
-            "description": self.description,
             "gender": self.gender,
             "name": self.name,
             "occupation": self.occupation,            
@@ -128,9 +120,10 @@ class Location(db.Model):
     image_path: Mapped[str] = mapped_column(String(255), nullable=False)
     town: Mapped[str] = mapped_column(String(255), nullable=False)
     use: Mapped[str] = mapped_column(String(255), nullable=False)
-    users_locations_like: Mapped[List["User"]] = relationship(
+    
+    users_who_favorited: Mapped[List["User"]] = relationship(
         secondary=favorite_location,
-        back_populates="locations_like",
+        back_populates="favorites_locations",
     )
 
     def serialize(self):
@@ -142,3 +135,4 @@ class Location(db.Model):
             "use": self.use,            
             "description": self.description if self.description else "Unknown"
         }
+
