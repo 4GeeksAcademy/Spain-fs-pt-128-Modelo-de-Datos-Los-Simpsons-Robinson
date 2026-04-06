@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
-# Tablas intermedias corregidas
+
 favorite_character = Table(
     "favorite_character",
     db.metadata,
@@ -29,16 +29,14 @@ class User(db.Model):
     firstname: Mapped[str] = mapped_column(String(120), nullable=False)
     lastname: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String(120), nullable=False)
+    password: Mapped[str] = mapped_column(String(120), nullable=False)    
     
-    # Nombres actualizados a favorites_characters
     favorites_characters: Mapped[List["Character"]] = relationship(
         "Character",
         secondary=favorite_character,
         back_populates="users_who_favorited",
     )
-
-    # Nombres actualizados a favorites_locations
+  
     favorites_locations: Mapped[List["Location"]] = relationship(
         "Location",
         secondary=favorite_location,
